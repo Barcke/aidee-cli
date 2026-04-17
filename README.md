@@ -2,7 +2,7 @@
 
 Python CLI for the AIDEE backend. It exposes the AIDEE REST API as structured terminal commands for recordings, AI summaries, templates, users, devices, memberships, redemption codes, and related operational endpoints.
 
-中文文档见 [docs/README.zh-CN.md](/Users/jeyyu/pyProject/aidee-cli/docs/README.zh-CN.md).
+中文文档见 [README.zh-CN.md](/Users/jeyyu/pyProject/aidee-cli/README.zh-CN.md).
 
 ## Overview
 
@@ -16,7 +16,7 @@ The project provides:
 - Environment-variable based configuration for CI and non-interactive use
 - REPL mode for interactive exploration
 - Thin per-resource API wrappers that map closely to backend endpoints
-- Basic unit and subprocess-level test coverage
+- Unit and end-to-end oriented test files for core workflows
 
 ## What The CLI Covers
 
@@ -40,16 +40,16 @@ The current codebase includes commands and API wrappers for:
 - `thirdparty`: convert summaries into third-party documents
 - `firmware`: device upgrade information
 
-## Project Characteristics
+## Architecture
 
-This repository is intentionally thin. Most business logic lives on the AIDEE backend; the CLI mainly does four things well:
+Most business logic lives on the AIDEE backend. The CLI focuses on four responsibilities:
 
 1. Accepts command-line arguments and validates the user input shape.
 2. Resolves runtime configuration from flags, session state, and environment variables.
 3. Calls backend endpoints with the expected request method, path, headers, and payload.
 4. Returns either pretty terminal output or JSON-friendly structured output.
 
-That makes the project straightforward to extend. New endpoints generally require:
+This structure keeps the project straightforward to extend. New endpoints generally require:
 
 1. A wrapper function in `core/<resource>.py`
 2. A command in [aidee_cli.py](/Users/jeyyu/pyProject/aidee-cli/aidee_cli.py)
@@ -60,7 +60,7 @@ That makes the project straightforward to extend. New endpoints generally requir
 
 The backend uses the `IM-TOKEN` request header, not `Authorization: Bearer`.
 
-Configuration can come from three places:
+Configuration can come from three sources:
 
 - CLI flags: `--base-url`, `--token`
 - Environment variables:
@@ -140,7 +140,7 @@ recording create --title "Quarterly Business Review"
 └── skills/SKILL.md       # Agent-oriented project guidance
 ```
 
-## Implementation Notes
+## Implementation
 
 ### CLI Layer
 
@@ -172,56 +172,21 @@ Examples:
 
 This keeps the command handlers and resource modules focused on endpoint behavior instead of transport details.
 
-## Development Notes
-
-The code currently assumes it is imported as `cli_anything.aidee`. That means this repository contains the AIDEE CLI source package, but not yet a standalone packaging scaffold such as `pyproject.toml` or `setup.py`.
-
-For public release, you will usually want to add:
-
-- packaging metadata
-- a console-script entry point for `cli-anything-aidee`
-- dependency declarations such as `click` and `requests`
-- installation instructions that match the final distribution method
-
-This README describes the source code as it exists in the repository today.
-
 ## Testing
 
-Current test files:
+The repository includes:
 
 - [tests/test_core.py](/Users/jeyyu/pyProject/aidee-cli/tests/test_core.py): unit tests for session/config behavior and request-shape validation with mocks
 - [tests/test_full_e2e.py](/Users/jeyyu/pyProject/aidee-cli/tests/test_full_e2e.py): subprocess tests plus optional live-service E2E coverage
 
-Optional live-service E2E requires:
+Typical test execution:
+
+```bash
+pytest tests/ -v
+```
+
+Live-service E2E can be gated with:
 
 - `AIDEE_E2E=1`
 - reachable AIDEE service
 - valid `AIDEE_TOKEN`
-
-In the current workspace, test execution could not be completed because `pytest` is not installed in the active Python environment.
-
-## Who This Project Is For
-
-This repository is a good fit if you need:
-
-- a backend-focused CLI for AIDEE operations
-- scriptable JSON output for automation or agents
-- a thin, maintainable Python wrapper over existing REST endpoints
-- a foundation for a future public developer tool around the AIDEE platform
-
-It is less appropriate if you need:
-
-- offline transcription logic
-- local AI inference
-- a desktop UI
-- a fully packaged PyPI release in its current repository state
-
-## License And Release Readiness
-
-Before publishing the repository publicly, review:
-
-- secrets and tokens in local files or shell history
-- whether endpoint names and operational commands are safe to expose
-- whether administrative commands such as `websocket` should remain public
-- packaging metadata and dependency pinning
-- final license, contribution guide, and changelog policy
