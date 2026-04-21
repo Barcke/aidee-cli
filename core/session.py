@@ -83,7 +83,7 @@ def clear_session() -> None:
 def get_base_url() -> str:
     import os
     sess = load_session()
-    return sess.get("base_url") or os.environ.get("AIDEE_BASE_URL", "http://localhost:8945/aidee-server")
+    return sess.get("base_url") or os.environ.get("AIDEE_BASE_URL", "https://api.aidee.me/aidee-server")
 
 
 def get_token() -> Optional[str]:

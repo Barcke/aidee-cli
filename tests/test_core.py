@@ -57,7 +57,7 @@ def test_get_base_url_default():
     """Returns default when empty."""
     from cli_anything.aidee.core.session import get_base_url
     with patch.dict(os.environ, {}, clear=False):
-        assert "localhost" in get_base_url() or "8945" in get_base_url()
+        assert get_base_url() == "https://api.aidee.me/aidee-server"
 
 
 def test_get_token_default():

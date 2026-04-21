@@ -8,7 +8,7 @@ import requests
 
 
 def get_default_base_url() -> str:
-    return os.environ.get("AIDEE_BASE_URL", "http://localhost:8945/aidee-server")
+    return os.environ.get("AIDEE_BASE_URL", "https://api.aidee.me/aidee-server")
 
 
 def get_default_token() -> Optional[str]:

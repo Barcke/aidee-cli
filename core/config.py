@@ -35,7 +35,7 @@ def show() -> dict:
     """Show current config (masked secrets)."""
     from cli_anything.aidee.core.session import SESSION_FILE
     sess = load_session()
-    base_url = sess.get("base_url") or "http://localhost:8945/aidee-server (default)"
+    base_url = sess.get("base_url") or "https://api.aidee.me/aidee-server (default)"
     return {
         "base_url": base_url,
         "token": _mask_secret(sess.get("token")),

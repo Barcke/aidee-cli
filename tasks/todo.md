@@ -2,15 +2,19 @@
 
 ## Plan
 
-- [x] Review repository structure, CLI entrypoints, core modules, and tests
-- [x] Identify the real public-facing scope of the project from code instead of old README text
-- [x] Rewrite the root `README.md` as the primary English project document
-- [x] Add a Chinese project introduction document at `docs/README.zh-CN.md`
-- [x] Record validation results and repository-state caveats for public release
+- [x] Review the current repository structure, entrypoints, and command registrations
+- [x] Verify the real authentication model from code and confirm `token` / `api key` behavior
+- [x] Rewrite the root `README.md` with more formal public-facing wording
+- [x] Replace outdated install/run instructions with command information that matches the source tree
+- [x] Validate the final README against code and record the verification result
 
 ## Review
 
-- The old README contained outdated path assumptions such as `cd agent-harness` and only described a subset of the implemented command surface.
-- The rewritten documentation now reflects the actual command groups and module structure present in the repository.
-- The docs explicitly describe the authentication model (`IM-TOKEN`), session persistence behavior, REPL support, and the difference between source layout and a fully packaged public release.
-- Test execution was attempted, but the active environment does not have `pytest` installed, so verification in this pass is limited to code inspection and command-surface consistency checks.
+- Rewrote `README.md` into a more formal public-facing document focused on project scope, authentication, configuration, command groups, and representative examples.
+- Removed the incorrect `pip install -e .` guidance and documented the actual repository caveat: this checkout does not currently include standalone packaging metadata.
+- Confirmed from source that authentication supports either `AIDEE_TOKEN` (`IM-TOKEN`) or `AIDEE_API_KEY` (`X-Api-Key`) for normal usage; both are not required.
+- Corrected command examples to match the registered Click interface, including positional device commands such as `device unbind DEVICE_ID` and `device get DEVICE_ID`.
+- Verified the command surface by running help commands through a temporary `PYTHONPATH` package shim:
+  - `python3 -m cli_anything.aidee.aidee_cli --help`
+  - `python3 -m cli_anything.aidee.aidee_cli device --help`
+  - `python3 -m cli_anything.aidee.aidee_cli redemption --help`

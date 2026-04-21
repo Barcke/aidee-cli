@@ -29,7 +29,7 @@
 ## E2E Test Plan
 
 ### Prerequisites
-- AIDEE service running at `http://localhost:8945/aidee-server` (or AIDEE_BASE_URL)
+- AIDEE service running at `https://api.aidee.me/aidee-server` (or AIDEE_BASE_URL)
 - Valid token in `AIDEE_TOKEN` or API key in `AIDEE_API_KEY` (or session)
 
 ### Workflows

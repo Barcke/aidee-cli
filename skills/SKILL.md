@@ -18,7 +18,7 @@ AIDEE CLI client for AI-powered recording, transcription, and summarization.
 
 ## Prerequisites
 
-- AIDEE service running (default: http://localhost:8945/aidee-server)
+- AIDEE service running (default: https://api.aidee.me/aidee-server)
 - Auth token (from Ideamake auth system)
 
 ## Installation
@@ -56,7 +56,7 @@ cd agent-harness && pip install -e .
 
 ```bash
 # Configure
-cli-anything-aidee config set-base-url http://localhost:8945/aidee-server
+cli-anything-aidee config set-base-url https://api.aidee.me/aidee-server
 cli-anything-aidee config set-token YOUR_TOKEN
 
 # User info
