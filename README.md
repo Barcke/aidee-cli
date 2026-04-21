@@ -1,93 +1,165 @@
 # AIDEE CLI
 
-AIDEE CLI is a Python command-line client for the AIDEE backend service. It exposes AIDEE REST APIs as structured terminal commands for recordings, summaries, templates, devices, memberships, redemption workflows, and related operational capabilities.
+AIDEE CLI 是一个面向 AIDEE 服务的命令行工具，适合客户或运维同学通过终端快速完成基础查询与常用操作，例如查看账号信息、查询录音、查看摘要、兑换权益等。
 
-中文说明见 [README.zh-CN.md](/Users/jeyyu/pyProject/aidee-cli/README.zh-CN.md).
+本文档以日常使用为主，只保留基础说明和基础案例。
 
-## Overview
+更多中文说明可参考 [README.zh-CN.md](/Users/jeyyu/pyProject/aidee-cli/README.zh-CN.md)。
 
-This project is intended for developers, QA engineers, automation workflows, and service integrations that need direct access to AIDEE backend capabilities without going through a graphical client.
+## 适用场景
 
-The CLI provides:
+- 查看当前账号信息
+- 查询录音列表与录音详情
+- 查看摘要结果
+- 使用兑换码查询权益信息
+- 查看自己的兑换记录
 
-- Resource-oriented command groups built with `click`
-- Optional `--json` output for scripts and agents
-- Local session persistence for endpoint and credentials
-- Environment-variable based, non-interactive configuration
-- An interactive REPL for exploratory usage
-- A thin API wrapper layer that stays close to backend endpoints
+## 认证方式
 
-## Authentication
+支持以下两种认证方式，二选一即可：
 
-The CLI supports two authentication methods:
+- `Token`：通过 `IM-TOKEN` 认证
+- `API Key`：通过 `X-Api-Key` 认证
 
-- `AIDEE_TOKEN`, sent as the `IM-TOKEN` header
-- `AIDEE_API_KEY`, sent as the `X-Api-Key` header
+可使用以下任一方式配置：
 
-For normal usage, providing either one is sufficient. You do not need to configure both unless a specific backend deployment requires it.
-
-## Repository Note
-
-The executable name used by this project is `cli-anything-aidee`.
-
-This repository currently contains the AIDEE command module source used under the `cli_anything.aidee` package namespace. The source tree in this checkout does not include packaging metadata such as `pyproject.toml` or `setup.py`, so the old `pip install -e .` instruction was not valid for this repository as-is.
-
-For that reason, the command examples below document the correct command surface and executable name, while actual installation should follow the packaging or host-project setup used in your environment.
-
-## Configuration
-
-Configuration can come from command-line options, environment variables, or the local session file.
-
-Supported command-line options:
-
-- `--base-url`
-- `--token`
-- `--api-key`
-- `--json`
-
-Supported environment variables:
-
-- `AIDEE_BASE_URL`
 - `AIDEE_TOKEN`
 - `AIDEE_API_KEY`
-- `AIDEE_REQUEST_TIMEOUT`
-- `AIDEE_SESSION_DIR`
 
-Session storage:
+一般情况下，只需要提供其中一个，不需要同时配置。
 
-- If `AIDEE_SESSION_DIR` is set, the CLI stores session data in `$AIDEE_SESSION_DIR/session.json`
-- Otherwise, it uses `~/.cli_anything_aidee/session.json`
+## 基础配置
 
-Default base URL:
+默认服务地址：
 
 ```text
 https://api.aidee.me/aidee-server
 ```
 
-## Quick Start
+首次使用前，建议先设置服务地址和认证信息。
 
-Configure the service endpoint and one credential type:
+使用 Token：
 
 ```bash
 cli-anything-aidee config set-base-url https://api.aidee.me/aidee-server
 cli-anything-aidee config set-token YOUR_IM_TOKEN
 ```
 
-Or use an API key instead of a token:
+使用 API Key：
 
 ```bash
 cli-anything-aidee config set-base-url https://api.aidee.me/aidee-server
-cli-anything-aidee config set-api-key YOUR_AIDEE_API_KEY
+cli-anything-aidee config set-api-key YOUR_API_KEY
 ```
 
-Inspect the active local configuration:
+查看当前配置：
 
 ```bash
 cli-anything-aidee config show
 cli-anything-aidee session status
 ```
 
-Use environment variables for non-interactive scenarios:
+## 基础使用案例
+
+### 1. 查看账号信息
+
+```bash
+cli-anything-aidee user info
+```
+
+### 2. 查看录音列表
+
+```bash
+cli-anything-aidee recording list
+```
+
+如果希望控制分页：
+
+```bash
+cli-anything-aidee recording list --page 1 --size 20
+```
+
+### 3. 查看某条录音详情
+
+```bash
+cli-anything-aidee recording get RECORDING_CODE
+```
+
+### 4. 创建一条录音记录
+
+```bash
+cli-anything-aidee recording create --title "客户沟通纪要"
+```
+
+### 5. 查看某条录音的摘要列表
+
+```bash
+cli-anything-aidee summary list RECORDING_CODE
+```
+
+### 6. 查看某条摘要详情
+
+```bash
+cli-anything-aidee summary get SUMMARY_ID
+```
+
+### 7. 查询兑换码可兑换内容
+
+```bash
+cli-anything-aidee redemption code-detail CODE_STRING
+```
+
+说明：这里是查询兑换码详情，不是创建兑换码。
+
+### 8. 查看当前账号的兑换记录
+
+```bash
+cli-anything-aidee redemption records
+```
+
+如果需要按来源筛选：
+
+```bash
+cli-anything-aidee redemption records --redeem-source aideeApp
+```
+
+## 常用命令
+
+```bash
+cli-anything-aidee --help
+cli-anything-aidee --version
+cli-anything-aidee config show
+cli-anything-aidee user info
+cli-anything-aidee recording list
+cli-anything-aidee summary list RECORDING_CODE
+cli-anything-aidee redemption code-detail CODE_STRING
+```
+
+## 交互模式
+
+可以直接进入交互模式：
+
+```bash
+cli-anything-aidee
+```
+
+或者：
+
+```bash
+cli-anything-aidee repl
+```
+
+如果参数中包含空格，请使用引号：
+
+```bash
+recording create --title "一对一客户回访"
+```
+
+## 环境变量方式
+
+如果不想把认证信息写入本地配置，也可以直接使用环境变量：
+
+使用 Token：
 
 ```bash
 export AIDEE_BASE_URL="https://api.aidee.me/aidee-server"
@@ -95,156 +167,17 @@ export AIDEE_TOKEN="YOUR_IM_TOKEN"
 cli-anything-aidee user info
 ```
 
-## Common Commands
-
-### Global
+使用 API Key：
 
 ```bash
-cli-anything-aidee --help
-cli-anything-aidee --version
-cli-anything-aidee --json recording list
-```
-
-### Recordings
-
-```bash
+export AIDEE_BASE_URL="https://api.aidee.me/aidee-server"
+export AIDEE_API_KEY="YOUR_API_KEY"
 cli-anything-aidee recording list
-cli-anything-aidee recording list --page 1 --size 20
-cli-anything-aidee recording get RECORDING_CODE
-cli-anything-aidee recording create --title "Project Sync"
-cli-anything-aidee recording update RECORDING_CODE --title "Updated Title"
-cli-anything-aidee recording delete RECORDING_CODE
-cli-anything-aidee recording speakers RECORDING_CODE
-cli-anything-aidee recording summary-templates
-cli-anything-aidee recording get-by-file-name "meeting.wav"
-cli-anything-aidee recording batch-delete RECORDING_CODE_1 RECORDING_CODE_2
-cli-anything-aidee recording usage-statistics
 ```
 
-### Summaries
+## 说明
 
-```bash
-cli-anything-aidee summary list RECORDING_CODE
-cli-anything-aidee summary get SUMMARY_ID
-cli-anything-aidee summary update SUMMARY_ID --content "Updated summary content"
-cli-anything-aidee summary stop SUMMARY_ID
-cli-anything-aidee summary delete SUMMARY_ID
-```
-
-### Templates and Redemption
-
-```bash
-cli-anything-aidee template list
-cli-anything-aidee template get TEMPLATE_ID
-cli-anything-aidee template create --name "Sales Review" --prompt "Summarize key outcomes"
-cli-anything-aidee template delete TEMPLATE_ID
-cli-anything-aidee template redeem CODE_STRING
-cli-anything-aidee template quota
-
-cli-anything-aidee redemption code-detail CODE_STRING
-cli-anything-aidee redemption records
-```
-
-### User and Device
-
-```bash
-cli-anything-aidee user info
-cli-anything-aidee user membership
-cli-anything-aidee user update --nickname "Alice"
-cli-anything-aidee user industry-position --industry-id 1 --position-id 2
-cli-anything-aidee user delete
-
-cli-anything-aidee device list
-cli-anything-aidee device primary
-cli-anything-aidee device bind --device-id DEVICE_ID --device-name "Recorder" --sn SN123
-cli-anything-aidee device unbind DEVICE_ID
-cli-anything-aidee device set-primary DEVICE_ID
-cli-anything-aidee device get DEVICE_ID
-cli-anything-aidee device count
-cli-anything-aidee device check-bound SN123
-```
-
-## Command Groups
-
-The current source registers the following top-level command groups:
-
-- `config`
-- `session`
-- `recording`
-- `summary`
-- `user`
-- `device`
-- `group`
-- `template`
-- `redemption`
-- `template-category`
-- `membership`
-- `industry`
-- `position`
-- `word-library`
-- `feedback`
-- `websocket`
-- `thirdparty`
-- `firmware`
-- `repl`
-
-## REPL Mode
-
-Running the CLI without a subcommand enters REPL mode. You can also start it explicitly:
-
-```bash
-cli-anything-aidee
-cli-anything-aidee repl
-```
-
-The REPL uses `shlex.split`, so quoted arguments with spaces are handled correctly:
-
-```bash
-recording create --title "Quarterly Business Review"
-```
-
-## Project Structure
-
-```text
-.
-├── aidee_cli.py
-├── __main__.py
-├── core/
-├── utils/
-├── tests/
-├── README.md
-└── README.zh-CN.md
-```
-
-Key files:
-
-- [aidee_cli.py](/Users/jeyyu/pyProject/aidee-cli/aidee_cli.py): CLI entrypoint and command registration
-- [core/session.py](/Users/jeyyu/pyProject/aidee-cli/core/session.py): session persistence and credential lookup
-- [core/config.py](/Users/jeyyu/pyProject/aidee-cli/core/config.py): configuration commands
-- [utils/aidee_backend.py](/Users/jeyyu/pyProject/aidee-cli/utils/aidee_backend.py): HTTP transport, timeout handling, and error translation
-- [tests/test_core.py](/Users/jeyyu/pyProject/aidee-cli/tests/test_core.py): unit coverage for config/session and request wiring
-- [tests/test_full_e2e.py](/Users/jeyyu/pyProject/aidee-cli/tests/test_full_e2e.py): subprocess and optional real-service tests
-
-## Testing
-
-Typical validation targets in this repository are:
-
-```bash
-pytest tests/ -v
-```
-
-Optional real-service end-to-end coverage depends on:
-
-- `AIDEE_E2E=1`
-- reachable AIDEE service
-- valid `AIDEE_TOKEN` or `AIDEE_API_KEY`
-
-## Validation Notes
-
-This README was aligned against the current source files, especially:
-
-- command registration in [aidee_cli.py](/Users/jeyyu/pyProject/aidee-cli/aidee_cli.py)
-- credential handling in [core/session.py](/Users/jeyyu/pyProject/aidee-cli/core/session.py)
-- HTTP header behavior in [utils/aidee_backend.py](/Users/jeyyu/pyProject/aidee-cli/utils/aidee_backend.py)
-
-One important repository caveat remains: this checkout does not include standalone packaging metadata, so documentation should not claim that this repository can be installed directly with `pip install -e .` unless packaging files are added later.
+- 文档中的命令名为 `cli-anything-aidee`
+- 本工具支持 `Token` 和 `API Key` 两种认证方式，任选其一即可
+- 当前客户文档仅展示基础能力和常用案例
+- 如需查看全部命令，请执行 `cli-anything-aidee --help`
