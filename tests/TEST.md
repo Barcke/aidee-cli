@@ -9,15 +9,17 @@
 
 ### session.py
 - `test_load_session_empty` — No file returns {}
-- `test_save_and_load_session` — Save base_url, token; load matches
+- `test_save_and_load_session` — Save base_url, token, api_key; load matches
 - `test_clear_session` — Clear removes file
 - `test_get_base_url_default` — Returns default when empty
 - `test_get_token_default` — Returns None when empty
+- `test_get_api_key_default` — Returns None when empty
 
 ### config.py
 - `test_set_base_url` — Sets and persists
 - `test_set_token` — Sets and persists
-- `test_show` — Returns dict with base_url, token (masked)
+- `test_set_api_key` — Sets and persists
+- `test_show` — Returns dict with base_url, token/api_key (masked)
 
 ### recording.py (with mocked api_request)
 - `test_create_calls_api` — POST /recordings with correct body
@@ -28,10 +30,10 @@
 
 ### Prerequisites
 - AIDEE service running at `http://localhost:8945/aidee-server` (or AIDEE_BASE_URL)
-- Valid token in AIDEE_TOKEN (or session)
+- Valid token in `AIDEE_TOKEN` or API key in `AIDEE_API_KEY` (or session)
 
 ### Workflows
-1. **Config flow** — Set base_url, set token, show config
+1. **Config flow** — Set base_url, set token/api key, show config
 2. **Health check** — GET /actuator/health (if exposed)
 3. **User info** — user info (requires token)
 4. **Recording list** — recording list (requires token)
@@ -40,7 +42,7 @@
 
 ## Realistic Workflow Scenarios
 
-- **Workflow: Setup** — config set-base-url, config set-token, config show
+- **Workflow: Setup** — config set-base-url, config set-token or config set-api-key, config show
 - **Workflow: Inspect** — user info, recording list, device list
 - **Workflow: Create** — recording create --title "Test", summary list <code>
 

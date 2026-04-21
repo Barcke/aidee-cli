@@ -1,4 +1,4 @@
-"""Session state management — base_url, token persistence."""
+"""Session state management — base_url, token/api key persistence."""
 
 import json
 import os
@@ -57,13 +57,19 @@ def _locked_save_json(path: Path, data: dict) -> None:
                     pass
 
 
-def save_session(base_url: Optional[str] = None, token: Optional[str] = None) -> dict:
+def save_session(
+    base_url: Optional[str] = None,
+    token: Optional[str] = None,
+    api_key: Optional[str] = None,
+) -> dict:
     """Update and save session."""
     sess = load_session()
     if base_url is not None:
         sess["base_url"] = base_url
     if token is not None:
         sess["token"] = token
+    if api_key is not None:
+        sess["api_key"] = api_key
     _locked_save_json(SESSION_FILE, sess)
     return sess
 
@@ -84,3 +90,9 @@ def get_token() -> Optional[str]:
     import os
     sess = load_session()
     return sess.get("token") or os.environ.get("AIDEE_TOKEN")
+
+
+def get_api_key() -> Optional[str]:
+    import os
+    sess = load_session()
+    return sess.get("api_key") or os.environ.get("AIDEE_API_KEY")

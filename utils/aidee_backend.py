@@ -15,6 +15,10 @@ def get_default_token() -> Optional[str]:
     return os.environ.get("AIDEE_TOKEN")
 
 
+def get_default_api_key() -> Optional[str]:
+    return os.environ.get("AIDEE_API_KEY")
+
+
 def _request_timeout_sec() -> float:
     raw = os.environ.get("AIDEE_REQUEST_TIMEOUT", "30")
     try:
@@ -28,15 +32,19 @@ def api_request(
     path: str,
     base_url: str,
     token: Optional[str] = None,
+    api_key: Optional[str] = None,
     json_body: Optional[dict] = None,
     params: Optional[dict] = None,
 ) -> dict[str, Any]:
     """Execute HTTP request to AIDEE API."""
     url = f"{base_url.rstrip('/')}{path}"
     headers = {"Content-Type": "application/json"}
+    effective_api_key = api_key or get_default_api_key()
     if token:
-        # AIDEE 使用 IM-TOKEN 请求头，非 Authorization: Bearer
+        # Token 鉴权使用 IM-TOKEN；ApiKey 走 X-Api-Key，两者可并存以兼容不同接口。
         headers["IM-TOKEN"] = token
+    if effective_api_key:
+        headers["X-Api-Key"] = effective_api_key
 
     try:
         resp = requests.request(

@@ -59,6 +59,7 @@ class TestCLISubprocess:
         data = json.loads(result.stdout)
         assert "base_url" in data
         assert "token" in data
+        assert "api_key" in data
 
     def test_config_set_base_url(self, tmp_path):
         """Test config set-base-url (uses session file)."""
@@ -70,6 +71,17 @@ class TestCLISubprocess:
         assert result.returncode == 0
         data = json.loads(result.stdout)
         assert data.get("base_url") == "http://localhost:8945/aidee-server"
+
+    def test_config_set_api_key(self, tmp_path):
+        """Test config set-api-key (uses session file)."""
+        session_dir = tmp_path / "session"
+        result = self._run(
+            ["--json", "config", "set-api-key", "aidee_test_key"],
+            session_dir=session_dir,
+        )
+        assert result.returncode == 0
+        data = json.loads(result.stdout)
+        assert data.get("status") == "ok"
 
     def test_recording_list_requires_service(self):
         """Test recording list — runs; may fail if service not running."""

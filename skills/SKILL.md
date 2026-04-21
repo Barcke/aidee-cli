@@ -31,11 +31,11 @@ cd agent-harness && pip install -e .
 
 | Group | Commands | Description |
 |-------|----------|-------------|
-| config | set-base-url, set-token, show, clear | Configure API URL and auth |
+| config | set-base-url, set-token, set-api-key, show, clear | Configure API URL and auth |
 | recording | create, get, update, delete, list, speakers, summary-templates | Recording CRUD |
 | summary | list, get, update, stop, delete | Recording summary management |
 | template | list, get, redeem, quota, … | Templates and template-scoped redeem |
-| redemption | create-code, code-detail, records | Redemption codes (create / preview / history) |
+| redemption | code-detail, records | Redemption codes (preview / history) |
 | user | info, membership | User info and membership |
 | device | list, primary | Device management |
 | group | list, create | Recording groups |
@@ -44,7 +44,9 @@ cd agent-harness && pip install -e .
 
 - Use `--json` for machine-readable output: `cli-anything-aidee --json recording list`
 - Set token: `cli-anything-aidee config set-token <token>` or `AIDEE_TOKEN` env
+- Set API key: `cli-anything-aidee config set-api-key <aidee_key>` or `AIDEE_API_KEY` env
 - **Token format**: Raw IM-TOKEN value (no "Bearer" prefix); AIDEE uses `IM-TOKEN` header
+- **API key format**: Raw `aidee_*` value; AIDEE uses `X-Api-Key` header
 - Set base URL: `cli-anything-aidee config set-base-url <url>` or `AIDEE_BASE_URL` env
 - Optional: `AIDEE_REQUEST_TIMEOUT` (seconds, default 30)
 - Most commands require authentication; configure token first
@@ -73,7 +75,6 @@ cli-anything-aidee recording get RECORDING_CODE
 cli-anything-aidee summary list RECORDING_CODE
 
 # Redemption codes
-cli-anything-aidee redemption create-code --code-type USAGE_COUNT --template-id TPL --quantity 10
 cli-anything-aidee redemption code-detail CODE_STRING
 cli-anything-aidee --json redemption records
 ```

@@ -1,13 +1,14 @@
 """AIDEE CLI — Main entry point."""
 
+import os
 import shlex
 import sys
 
 import click
 
 from cli_anything.aidee import __version__
-from cli_anything.aidee.core.session import get_base_url, get_token
-from cli_anything.aidee.core.config import set_base_url, set_token, show as config_show, clear as config_clear
+from cli_anything.aidee.core.session import get_api_key, get_base_url, get_token
+from cli_anything.aidee.core.config import set_api_key, set_base_url, set_token, show as config_show, clear as config_clear
 from cli_anything.aidee.core.recording import (
     create as recording_create,
     get as recording_get,
@@ -80,13 +81,17 @@ def _output(result, json_mode: bool):
 @click.option("--json", "json_mode", is_flag=True, help="Output as JSON")
 @click.option("--base-url", envvar="AIDEE_BASE_URL", help="AIDEE API base URL")
 @click.option("--token", envvar="AIDEE_TOKEN", help="Auth token")
+@click.option("--api-key", envvar="AIDEE_API_KEY", help="AIDEE API key (sent as X-Api-Key)")
 @click.pass_context
-def cli(ctx, json_mode, base_url, token):
+def cli(ctx, json_mode, base_url, token, api_key):
     """AIDEE CLI — AI recording, transcription, and summarization API client."""
     ctx.ensure_object(dict)
     ctx.obj["json_mode"] = json_mode
     ctx.obj["base_url"] = base_url
     ctx.obj["token"] = token
+    ctx.obj["api_key"] = api_key or get_api_key()
+    if ctx.obj["api_key"]:
+        os.environ["AIDEE_API_KEY"] = ctx.obj["api_key"]
 
     if ctx.invoked_subcommand is None:
         ctx.invoke(repl)
@@ -116,6 +121,16 @@ def config_set_base_url(ctx, url, json_mode):
 def config_set_token_cmd(ctx, token, json_mode):
     """Set auth token."""
     r = set_token(token)
+    _output(r, json_mode or ctx.obj.get("json_mode"))
+
+
+@config_group.command("set-api-key")
+@click.argument("api_key")
+@click.option("--json", "json_mode", is_flag=True)
+@click.pass_context
+def config_set_api_key_cmd(ctx, api_key, json_mode):
+    """Set API key."""
+    r = set_api_key(api_key)
     _output(r, json_mode or ctx.obj.get("json_mode"))
 
 
@@ -592,31 +607,8 @@ def template_quota_cmd(ctx, json_mode):
 # --- redemption ---
 @cli.group("redemption")
 def redemption_group():
-    """兑换码：创建、详情、兑换记录（与后端 /recordings/redemption 对齐）。"""
+    """兑换码：详情、兑换记录（与后端 /recordings/redemption 对齐）。"""
     pass
-
-
-@redemption_group.command("create-code")
-@click.option("--code-type", "code_type", required=True, help="USAGE_COUNT / ACCESS_PERMISSION / MEMBERSHIP_DURATION / SUMMARY_USAGE_DURATION")
-@click.option("--template-id")
-@click.option("--membership-level-id", type=int)
-@click.option("--duration-days", type=int)
-@click.option("--quantity", type=int)
-@click.option("--json", "json_mode", is_flag=True)
-@click.pass_context
-def redemption_create_code_cmd(ctx, code_type, template_id, membership_level_id, duration_days, quantity, json_mode):
-    """新增单条兑换码（码值由服务端生成，可兑 1 次，默认有效期一个月）。"""
-    body: dict = {"codeType": code_type}
-    if template_id:
-        body["templateId"] = template_id
-    if membership_level_id is not None:
-        body["membershipLevelId"] = membership_level_id
-    if duration_days is not None:
-        body["durationDays"] = duration_days
-    if quantity is not None:
-        body["quantity"] = quantity
-    r = redemption_api.create_code(_ctx_base(ctx), _ctx_token(ctx), body)
-    _output(r, json_mode or ctx.obj.get("json_mode"))
 
 
 @redemption_group.command("code-detail")
@@ -917,12 +909,12 @@ def repl():
     skin = ReplSkin("aidee", __version__)
     skin.print_banner()
     commands = {
-        "config": ["set-base-url", "set-token", "show", "clear"],
+        "config": ["set-base-url", "set-token", "set-api-key", "show", "clear"],
         "session": ["status"],
         "recording": ["create", "get", "list", "..."],
         "summary": ["list", "get", "update", "stop", "delete"],
         "template": ["list", "get", "redeem", "quota", "..."],
-        "redemption": ["create-code", "code-detail", "records"],
+        "redemption": ["code-detail", "records"],
         "user": ["info", "membership", "update", "..."],
         "device": ["list", "primary", "bind", "..."],
         "group": ["list", "create", "update", "delete", "sort"],

@@ -34,12 +34,13 @@ def test_load_session_empty():
 
 
 def test_save_and_load_session():
-    """Save base_url, token; load matches."""
+    """Save base_url, token, api_key; load matches."""
     from cli_anything.aidee.core.session import load_session, save_session
-    save_session(base_url="http://test:8080", token="abc123")
+    save_session(base_url="http://test:8080", token="abc123", api_key="aidee_key_1234")
     sess = load_session()
     assert sess["base_url"] == "http://test:8080"
     assert sess["token"] == "abc123"
+    assert sess["api_key"] == "aidee_key_1234"
 
 
 def test_clear_session():
@@ -68,6 +69,14 @@ def test_get_token_default():
     assert get_token() is None or get_token() == ""
 
 
+def test_get_api_key_default():
+    """Returns None when API key is empty."""
+    from cli_anything.aidee.core.session import get_api_key
+    with patch.dict(os.environ, {"AIDEE_API_KEY": ""}, clear=False):
+        pass
+    assert get_api_key() is None or get_api_key() == ""
+
+
 def test_set_base_url():
     """Config set_base_url persists."""
     from cli_anything.aidee.core.config import set_base_url
@@ -83,13 +92,22 @@ def test_set_token():
     assert r["status"] == "ok"
 
 
+def test_set_api_key():
+    """Config set_api_key persists."""
+    from cli_anything.aidee.core.config import set_api_key
+    r = set_api_key("aidee_secret")
+    assert r["status"] == "ok"
+
+
 def test_show():
     """Config show returns dict."""
-    from cli_anything.aidee.core.config import show, set_base_url
+    from cli_anything.aidee.core.config import show, set_api_key, set_base_url
     set_base_url("http://test:8000")
+    set_api_key("aidee_key_1234")
     r = show()
     assert "base_url" in r
     assert "token" in r
+    assert "api_key" in r
     assert "session_file" in r
 
 
@@ -128,18 +146,27 @@ def test_recording_list_calls_api():
         assert call[1]["params"]["size"] == 10
 
 
-def test_redemption_create_code_calls_api():
-    """Redemption create posts to /recordings/redemption/codes."""
-    from cli_anything.aidee.core.redemption import create_code
-    with patch("cli_anything.aidee.core.redemption.api_request") as m:
-        m.return_value = {"code": 200, "data": {"code": "ZS12345678"}}
-        create_code(
-            "http://x",
-            "tok",
-            {"codeType": "USAGE_COUNT", "templateId": "t1", "quantity": 1},
-        )
-        m.assert_called_once()
-        assert m.call_args[0][:3] == ("POST", "/recordings/redemption/codes", "http://x")
+def test_api_request_sends_api_key_header():
+    """API key is sent as X-Api-Key when configured via env."""
+    from cli_anything.aidee.utils.aidee_backend import api_request
+
+    class _Response:
+        content = b'{"code":200}'
+        text = '{"code":200}'
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"code": 200}
+
+    with patch.dict(os.environ, {"AIDEE_API_KEY": "aidee_test_key"}, clear=False):
+        with patch("cli_anything.aidee.utils.aidee_backend.requests.request", return_value=_Response()) as m:
+            r = api_request("GET", "/users/information", "http://x", token="tok")
+            assert r["code"] == 200
+            headers = m.call_args.kwargs["headers"]
+            assert headers["IM-TOKEN"] == "tok"
+            assert headers["X-Api-Key"] == "aidee_test_key"
 
 
 def test_print_result_json_mode():
