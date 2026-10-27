@@ -41,7 +41,16 @@ public = (
     .decode()
 )
 trusted = os.environ.get("AIDEE_RELEASE_PUBLIC_KEY_PEM")
-if not trusted or trusted.strip() != public.strip():
+try:
+    trusted_key = serialization.load_pem_public_key((trusted or "").encode())
+except (ValueError, TypeError):
+    raise SystemExit("Invalid protected trusted public key") from None
+# Compare key identity, not PEM text: protected variables may use CRLF line endings.
+if trusted_key.public_bytes(
+    serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo
+) != private.public_key().public_bytes(
+    serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo
+):
     raise SystemExit("Signing key does not match the protected trusted public key")
 commit = (
     os.environ.get("GITHUB_SHA")
