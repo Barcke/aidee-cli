@@ -172,6 +172,44 @@ class Client:
             )
 
 
+def _page_payload(data):
+    """Accept the verified IPage and IdeamakePage contracts, with at most one Result."""
+    if isinstance(data, dict) and "code" in data:
+        if str(data["code"]) not in ("0", "200"):
+            raise from_upstream(data["code"], "分页接口返回失败")
+        if data.get("success") is False or data.get("ok") is False:
+            raise CLIError("BUSINESS_REJECTED", "分页接口返回失败", 5)
+        data = data.get("data")
+    if (
+        not isinstance(data, dict)
+        or data.get("success") is False
+        or data.get("ok") is False
+    ):
+        raise CLIError("BUSINESS_REJECTED", "分页响应不是约定的页面对象", 5)
+    if "code" in data:
+        raise CLIError("BUSINESS_REJECTED", "分页响应包含未处理的嵌套信封", 5)
+    if "records" in data:
+        if not isinstance(data["records"], list):
+            raise CLIError("BUSINESS_REJECTED", "分页响应缺少约定的 records 数组", 5)
+        return data, data["records"]
+    # Aidee's actual IdeamakePage is list/total/size/current/pages, not MyBatis IPage.
+    fields = ("total", "size", "current", "pages")
+    if isinstance(data.get("list"), list) and all(
+        isinstance(data.get(key), int) and not isinstance(data.get(key), bool)
+        for key in fields
+    ):
+        if (
+            data["total"] >= 0
+            and data["pages"] >= 0
+            and data["current"] >= 1
+            and data["size"] >= 1
+        ):
+            return data, data["list"]
+    raise CLIError(
+        "BUSINESS_REJECTED", "分页响应不符合 records 或 IdeamakePage 契约", 5
+    )
+
+
 def pages(
     fetch,
     params,
@@ -191,7 +229,7 @@ def pages(
     seen = set()
     for index in range(max_pages if all_pages else 1):
         try:
-            data = fetch(query, deadline)
+            data, rows = _page_payload(fetch(query, deadline))
         except CLIError as error:
             error.meta = (
                 {"partial": {"records": records, "pages": meta["pages"], "next": query}}
@@ -199,9 +237,6 @@ def pages(
                 else None
             )
             raise
-        if not isinstance(data, dict) or not isinstance(data.get("records"), list):
-            raise CLIError("BUSINESS_REJECTED", "分页响应缺少约定的 records 数组", 5)
-        rows = data["records"]
         page_offset = offset if index == 0 else 0
         if page_offset > len(rows):
             raise CLIError(
@@ -210,7 +245,11 @@ def pages(
         rows = rows[page_offset:]
         meta["pages"] += 1
         if cursor:
-            more = data.get("hasMore") is True
+            if not isinstance(data.get("hasMore"), bool):
+                raise CLIError(
+                    "BUSINESS_REJECTED", "游标页缺少约定的 hasMore 布尔值", 5
+                )
+            more = data["hasMore"]
             next_query = {
                 **query,
                 "cursor": True,
