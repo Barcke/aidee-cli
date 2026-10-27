@@ -81,4 +81,10 @@ jobs:
       - name: Attach release artifacts
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/*.whl dist/manifest.json dist/manifest.sig --verify-tag --generate-notes
+        run: |
+          flags=(--verify-tag --generate-notes)
+          channel="$(python -c 'import json;print(json.load(open("dist/manifest.json"))["channel"])')"
+          if [ "$channel" = preview ]; then
+            flags+=(--prerelease --latest=false)
+          fi
+          gh release create "$GITHUB_REF_NAME" dist/*.whl dist/manifest.json dist/manifest.sig "${flags[@]}"
