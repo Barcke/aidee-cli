@@ -201,9 +201,9 @@ def test_personal_export_complete_and_nonoverwrite(invoke, tmp_path):
     target = tmp_path / "recording.md"
     result = run("recording", "export", "r1", "--output-file", str(target))
     assert result.exit_code == 0, result.output
-    assert target.read_text() == "原文\n"
+    assert target.read_text(encoding="utf-8") == "原文\n"
     second = run("recording", "export", "r1", "--output-file", str(target))
-    assert second.exit_code == 7 and target.read_text() == "原文\n"
+    assert second.exit_code == 7 and target.read_text(encoding="utf-8") == "原文\n"
 
 
 def test_team_discovery_context_and_exact_cursor(invoke):
