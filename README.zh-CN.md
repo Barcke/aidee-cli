@@ -1,5 +1,7 @@
 # Aidee 用户 CLI
 
+> 用户CLI已迁入Aidee主仓 `cli/`，由主仓GitLab CI发布到既有OSS。本仓保留历史2.0.0源码与Release，后续维护和发行以Aidee为准。安装、授权与升级请看[当前使用页](https://web.aidee.me/plugin-docs/aidee-cli)。
+
 查询本人的录音、原文和总结，以及有权访问的团队空间；为本人兑换权益、查看会员套餐和生成付款入口。
 
 需要 Python 3.10+ 和 uv。正式签名发行完成前，可从当前源码安装：
