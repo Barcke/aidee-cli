@@ -1,192 +1,78 @@
-# AIDEE CLI
+# Aidee 用户 CLI
 
-AIDEE CLI 是一个面向 AIDEE 后端服务的 Python 命令行工具。它将 AIDEE 的 REST API 封装为结构化终端命令，用于录音、AI 摘要、模板、用户、设备、会员、兑换码及相关运营能力的统一访问。
+查询本人的录音、原文和总结，以及有权访问的团队空间；为本人兑换权益、查看会员套餐和生成付款入口。
 
-English version: [README.md](/Users/jeyyu/pyProject/aidee-cli/README.md)
-
-## 项目概述
-
-AIDEE CLI 面向开发者、测试人员、自动化流程以及需要直接接入 AIDEE 服务的集成场景。它以清晰的命令树提供稳定的后端访问方式，适合联调、验证、脚本化调用与批处理操作。
-
-项目提供：
-
-- 基于 `click` 的命令组与子命令体系
-- 面向脚本和 Agent 的 `--json` 输出模式
-- 本地会话持久化，保存 API 基础地址与 Token
-- 基于环境变量的无交互配置方式
-- 用于交互探索的 REPL 模式
-- 与后端接口高度对应的资源级 API 包装层
-- 覆盖核心流程的单元测试与端到端测试文件
-
-## 功能范围
-
-当前代码已覆盖以下命令域与接口能力：
-
-- `config`：本地配置基础地址与 Token
-- `session`：查看当前会话状态
-- `recording`：录音创建、查询、更新、删除、分页列表、说话人查询、使用统计、批量删除、按文件名查询等
-- `summary`：摘要列表、详情、更新、停止、删除
-- `template`：摘要模板管理、兑换、额度查询
-- `redemption`：兑换码创建、详情查询、兑换记录
-- `user`：用户信息、会员信息、资料更新、行业职位设置、删除用户
-- `device`：设备列表、主设备查询、绑定、解绑、主设备设置、设备状态查询
-- `group`：录音分组创建与管理
-- `template-category`：模板分类查询
-- `membership`：会员等级、订单、订单状态、升级价格
-- `industry` 与 `position`：基础元数据查询
-- `word-library`：个人词库与热词管理
-- `feedback`：反馈记录查询
-- `websocket`：WebSocket 管理能力与消息发送
-- `thirdparty`：摘要转第三方文档
-- `firmware`：固件升级信息
-
-## 架构说明
-
-项目的大部分业务逻辑位于 AIDEE 后端，CLI 主要承担四类职责：
-
-1. 接收命令行参数并校验输入结构。
-2. 从命令参数、环境变量和本地会话中解析运行配置。
-3. 以约定的方法、路径、请求头和负载调用后端接口。
-4. 输出适合终端阅读或机器消费的结果。
-
-这一结构使项目具备良好的可扩展性。新增接口通常只需要：
-
-1. 在 `core/<resource>.py` 中补充包装函数
-2. 在 [aidee_cli.py](/Users/jeyyu/pyProject/aidee-cli/aidee_cli.py) 中注册对应命令
-3. 为参数与请求形态补充测试
-4. 同步更新文档
-
-## 认证与配置
-
-后端使用 `IM-TOKEN` 请求头，而不是 `Authorization: Bearer`。
-
-配置来源包括：
-
-- 命令行参数：`--base-url`、`--token`
-- 环境变量：
-  - `AIDEE_BASE_URL`
-  - `AIDEE_TOKEN`
-  - `AIDEE_REQUEST_TIMEOUT`
-  - `AIDEE_SESSION_DIR`
-- 本地持久化 session 文件
-
-session 文件位置：
-
-- 如果设置了 `AIDEE_SESSION_DIR`，则使用 `$AIDEE_SESSION_DIR/session.json`
-- 否则默认使用 `~/.cli_anything_aidee/session.json`
-
-## 使用示例
-
-### 配置
+需要 Python 3.10+ 和 uv。正式签名发行完成前，可从当前源码安装：
 
 ```bash
-cli-anything-aidee config set-base-url http://localhost:8945/aidee-server
-cli-anything-aidee config set-token YOUR_IM_TOKEN
-cli-anything-aidee config show
-```
-
-### 查询用户与录音
-
-```bash
-cli-anything-aidee user info
-cli-anything-aidee recording list
-cli-anything-aidee recording get RECORDING_CODE
-```
-
-### 操作摘要
-
-```bash
-cli-anything-aidee summary list RECORDING_CODE
-cli-anything-aidee summary get 123
-cli-anything-aidee summary update 123 --content "Updated summary content"
-```
-
-### 输出 JSON
-
-```bash
-cli-anything-aidee --json recording list
-cli-anything-aidee --json redemption records
-```
-
-### 进入交互模式
-
-```bash
-cli-anything-aidee
+uv tool install .
+aidee --version
+aidee auth login                 # 隐藏输入本人已有 API Key
 # 或
-cli-anything-aidee repl
+aidee auth login --browser       # 原网页登录并确认权限
+aidee auth login --browser --scope write  # 兑换/下单所需read+write，在网页明确确认
+aidee auth status --verify
 ```
 
-REPL 使用 `shlex.split` 解析输入，因此支持包含空格的参数：
+浏览器授权需要配套 Aidee Web/服务端版本。Key 不写入聊天、URL或使用说明。配置优先使用系统钥匙串；无可用钥匙串时使用本机受限权限文件。无浏览器环境可用 `AIDEE_API_KEY`，或 `aidee auth login --key-stdin`。
 
 ```bash
-recording create --title "Quarterly Business Review"
+aidee recording list --period last_week --limit 20
+aidee recording list --week 2026-W01 --timezone Asia/Shanghai
+aidee recording get <录音code>
+aidee recording transcript <录音code> --all
+aidee summary list <录音code>
+aidee folder tree
+
+aidee team list
+aidee team use <团队ID>
+aidee space list
+aidee space recording list --space <空间ID> --all
+aidee space recording transcript <录音code> --space <空间ID> --all
+
+aidee membership current
+aidee membership quota
+aidee membership plans
+aidee membership checkout --plan <packageVersionId>
+aidee order get <订单号>
+aidee order wait <订单号>
+aidee order recover <原requestId>
+
+aidee redemption preview
+aidee redemption redeem
+aidee redemption records
 ```
 
-## 仓库结构
+下单和兑换先展示真实内容，再确认。付款由用户在收银台完成；二维码内容 `codeUrl` 不是通用网页链接。付款后查单，支付成功与权益到账分别展示。请求超时使用已保存的 requestId 恢复原订单，不能盲目重复下单。非交互写操作需要取得用户授权后显式使用 `--yes`；`--dry-run` 不联网、不创建订单、不消费兑换码。
 
-```text
-.
-├── aidee_cli.py          # CLI 主入口与命令注册
-├── __main__.py           # python -m 入口
-├── core/                 # 按资源拆分的 REST API 包装层
-├── utils/
-│   ├── aidee_backend.py  # HTTP 客户端与错误处理
-│   ├── output.py         # 输出格式化
-│   └── repl_skin.py      # REPL 展示层
-├── tests/
-│   ├── test_core.py      # 基于 mock 的单元测试
-│   ├── test_full_e2e.py  # 子进程与可选真服务端到端测试
-│   └── TEST.md           # 测试计划说明
-└── skills/SKILL.md       # Agent 使用说明
-```
-
-## 实现说明
-
-### CLI 层
-
-[aidee_cli.py](/Users/jeyyu/pyProject/aidee-cli/aidee_cli.py) 包含顶层 `click` 命令组和全部命令注册，同时负责：
-
-- 暴露 `--json`
-- 解析上下文中的 `base_url` 与 `token`
-- 在未提供子命令时回退到 REPL 模式
-- 将具体 HTTP 调用委托给 `core/`
-
-### 核心 API 层
-
-[core](/Users/jeyyu/pyProject/aidee-cli/core) 目录下的每个模块都对应一类后端资源，函数设计尽量与 REST 接口保持直接映射。
-
-示例：
-
-- [core/recording.py](/Users/jeyyu/pyProject/aidee-cli/core/recording.py)
-- [core/summary.py](/Users/jeyyu/pyProject/aidee-cli/core/summary.py)
-- [core/redemption.py](/Users/jeyyu/pyProject/aidee-cli/core/redemption.py)
-
-### HTTP 基础层
-
-[utils/aidee_backend.py](/Users/jeyyu/pyProject/aidee-cli/utils/aidee_backend.py) 统一处理：
-
-- 超时控制
-- `IM-TOKEN` 请求头注入
-- JSON 解码
-- 连接错误、超时错误与 HTTP 错误转换
-
-这样命令处理层和资源层可以更专注于接口行为本身。
-
-## 测试
-
-仓库包含：
-
-- [tests/test_core.py](/Users/jeyyu/pyProject/aidee-cli/tests/test_core.py)：session/config 与请求形态相关的单元测试
-- [tests/test_full_e2e.py](/Users/jeyyu/pyProject/aidee-cli/tests/test_full_e2e.py)：子进程测试与可选真实服务 E2E
-
-典型执行方式：
+默认 JSON；`--output table` / `--output markdown` 适合终端阅读；`--jq` 使用本机 jq。进度和提醒写入 stderr，HTTP 200 中的业务失败仍会非零退出。分页 `--all` 最多100页、5000条、120秒，截断会返回续页信息。若 `meta.next` 含 `query` 与 `offset`，保留相同筛选/limit，按 query 的页码或游标续查并增加 `--offset <offset>`；offset 只跳过续读首页已收到的条目。团队按真实分享权限读取，列表可见不等于原文可见；合并总结只读当前版本、无原文。
 
 ```bash
-pytest tests/ -v
+aidee recording export <录音code> --format md
+aidee recording export <录音code> --output-file notes.md
+# 已存在文件需要明确 --overwrite
+aidee --profile test config set api_base https://test-api.ideamake.cn/aidee-server
+aidee --profile test config set team_base https://test-api.ideamake.cn/team-aidee-server
+aidee profile use test
+aidee schema
+aidee schema membership.checkout
+aidee skills list
+aidee skills sync --dry-run
 ```
 
-真实服务 E2E 可通过以下条件开启：
+本版保留 `cli-anything-aidee` 核心查询入口和 `user info`、`group list`、`template redeem` 等个人命令别名；新增确认和失败退出码可能影响旧脚本。编辑、删除、设备操作、触发AI任务不属于本版。没有生成兑换码、代兑、调整会员、团队成员管理或任意HTTP接口命令。旧工具不会被自动卸载。
 
-- `AIDEE_E2E=1`
-- 可访问的 AIDEE 服务
-- 有效的 `AIDEE_TOKEN`
+正式发行安装由签名清单验证后交给 uv tool；已有 pipx 安装继续用原管理器。源码或直接 pip 安装不会被自动覆盖。签名与安装来源尚未配置时，升级会明确失败并给出原管理器指引。
+
+```bash
+aidee update --check
+aidee update
+aidee update --sync-skills   # 明确选择同步本CLI的Agent指南
+# 现有uv/pipx工具缺回执，且当前版本存在可信签名发行时：
+aidee update --register-manager pipx
+aidee config set update.auto true
+```
+
+默认只检查并提示。自动安装需明确开启、TTY且非CI、非 `--json`、非dry-run；升级调用不发业务请求，下一次命令使用新版。升级保留授权和profile，失败尝试原管理器恢复原固定版本。默认不修改Agent的Skills目录，会单独报告 `skillsSync.status=not_requested`；可手动运行 `aidee skills sync`，或安装/升级时显式选择 `--sync-skills`。每次覆盖本地修改前保留可恢复副本；Skills失败独立提示，已完成的安装/升级状态仍单独展示。
+
+工程构建、发布与验证见 [维护说明](docs/maintainer.md)。
